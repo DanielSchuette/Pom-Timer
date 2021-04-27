@@ -16,6 +16,7 @@
 #ifndef __TIMER_H__
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #define WORK_TIME_DEFAULT   25
@@ -70,7 +71,7 @@ typedef struct ptimer {
 typedef struct configs {
     int work_time;
     int break_time;
-    char *save_path;
+    char *save_path; /* malloc'd */
 } configs;
 
 /* global because it's tedious to pass these around (and signals need them) */
@@ -105,8 +106,11 @@ void bad_option(int, const char *, int);
 /* sigint_handler: catch signals to be able to save stats before exiting. */
 void sigint_handler(int);
 
-/* save_stats: save some stats to a log file. */
-void save_stats(const char *);
+/* save_stats: save some statistics to a log file. */
+void save_stats(const configs *);
+
+/* print_stats: print some statistics to a file. */
+void print_stats(const configs *, FILE *);
 
 /* setup_term: disable ECHOCTL, i.e. don't print ^C on sigint. */
 void setup_term(void);

@@ -187,30 +187,40 @@ void bad_option(int val, const char *option, int mode)
 void sigint_handler(int signum)
 {
     (void)signum; /* gcc doesn't want us to omit the param name */
-    if (config.save_path)
-        save_stats(config.save_path);
+
+    if (config.save_path) {
+        save_stats(&config);
+    } else {
+        fprintf(stderr, "\nSummary:\n");
+        print_stats(&config, stderr);
+    }
     fprintf(stderr, "\n\n%sDone%s.\n", ANSI_GREEN, ANSI_RESET);
 
     free(config.save_path);
     exit(0);
 }
 
-void save_stats(const char *path)
+void save_stats(const configs *config)
 {
     FILE *file;
+
+    file = fopen(config->save_path, "a");
+    print_stats(config, file);
+    fclose(file);
+}
+
+void print_stats(const configs* config, FILE *stream)
+{
+    int elapsed;
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
-    int elapsed;
 
-    /* open the log file, calculate the time and save it */
-    file = fopen(path, "a");
-    elapsed = (timer.num_work*config.work_time*60)+   /* completed work secs */
-              (timer.num_break*config.break_time*60)+ /* completed break secs */
-              (timer.mins*60+timer.secs);             /* secs on clock */
-    fprintf(file, "[%2d/%02d/%d %2dh:%2dm]\t%dhrs\t%dmins (%dsecs)\n",
+    elapsed = (timer.num_work*config->work_time*60)+   /* completed work secs */
+              (timer.num_break*config->break_time*60)+ /* completed break secs */
+              (timer.mins*60+timer.secs);              /* secs on clock */
+    fprintf(stream, "[%2d/%02d/%d %2dh:%2dm]\t%dhrs\t%dmins (%dsecs)\n",
             tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
             tm->tm_hour, tm->tm_min, elapsed/3600, elapsed/60, elapsed);
-    fclose(file);
 }
 
 void setup_term(void)
